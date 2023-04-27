@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+* {
+  box-sizing: border-box;
+}
+
+input[type=text], select, textarea {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  resize: vertical;
+}
+h2{
+  text-align: center;
+}
+
+label {
+  padding: 12px 12px 12px 0;
+  display: inline-block;
+}
+
+input[type=submit] {
+  background-color: #04AA6D;
+  color: white;
+  padding: 12px 20px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-left: 368px;
+}
+
+input[type=submit]:hover {
+  background-color: #45a049;
+}
+
+.container {
+  border-radius: 5px;
+  background-color: #f2f2f2;
+  padding: 20px;
+}
+
+.col-25 {
+  float: left;
+  width: 25%;
+  margin-top: 6px;
+}
+
+.col-75 {
+  float: left;
+  width: 75%;
+  margin-top: 6px;
+}
+
+/* Clear floats after the columns */
+.row:after {
+  content: "";
+  display: table;
+  clear: both;
+}
+
+/* Responsive layout - when the screen is less than 600px wide, make the two columns stack on top of each other instead of next to each other */
+@media screen and (max-width: 600px) {
+  .col-25, .col-75, input[type=submit] {
+    width: 100%;
+    margin-top: 0;
+  }
+}
+</style>
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+</head>
+<body>
+
+<h2>Order Material</h2>
+<div class="container">
+  <form id="submitForm" onsubmit="submitForm(event)">
+    <div class="row">
+        <div class="col-25">
+          <label for="selectMaterial" class="form-label">Please select a component to order: </label>
+        </div>
+        <div class="col-75">
+          <select class="form-select form-select-sm" id="selectMaterial"
+                                  aria-label=".form-select-sm example">
+                                  <option selected>- Select -</option>
+                                  <option value="Bicycle Frame">Bicycle Frame</option>
+                                  <option value="One pair of 24" Bicycle tyres">One pair of 24" Bicycle tyres</option>
+                                  <option value="Complete chain set">Complete chain set</option>
+                              </select>
+        </div>
+      </div>
+
+    <div class="row">
+      <div class="col-25">
+        <label for="selectQuantity" class="form-label">Please select the quantity: </label>
+      </div>
+      <div class="col-75">
+        <select class="form-select form-select-sm" id="selectQuantity" aria-label=".form-select-sm example" v-model="quantity">
+                                  <option selected>- Select -</option>
+                                  <option value="1">1</option>
+                                  <option value="2">2</option>
+                                  <option value="3">3</option>
+                                  <option value="4">4</option>
+                                  <option value="5">5</option>
+                              </select>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col-25">
+        <label for="selectPriority" class="form-label">Priority for your order: </label>
+      </div>
+      <div class="col-75">
+        <input type="radio" id="low" name="priority" value="Low">
+        <label for="low">Low</label>
+        <input type="radio" id="medium" name="priority" value="Medium">
+        <label for="medium">Medium</label> 
+        <input type="radio" id="high" name="priority" value="High">
+        <label for="high">High</label><br> 
+      </div>
+  </div>
+  
+    </br>
+    <div class="row">
+      <input type="submit" value="Order Material">
+    </div>
+  </form>
+</div>
+
+</body>
+</html>
+
+<script>
+  function submitForm(event) {
+    var materialValue;
+    event.preventDefault()
+    const urlParams = new URLSearchParams(window.location.search)
+    const taskId = urlParams.get('taskId')
+    const callbackUrl = urlParams.get('callbackUrl')
+  
+    var materialName = document.getElementById("selectMaterial");
+    var materialValue = materialName.value;
+    const materialQuantity = document.getElementById('selectQuantity').value
+    const materialPriority = document.querySelector('input[name="priority"]:checked').value;
+    // const isApproved = approved ? true : false
+  
+  axios.post('http://localhost:8080/engine-rest/task/' + taskId + '/submit-form', {
+      "variables": {
+          "materialName": {
+              "value": materialValue,
+              "type": "String"
+          },
+          "materialQuantity": {
+              "value": parseInt(materialQuantity)
+          },
+          "materialPriority": {
+              "value": materialPriority,
+              "type": "String"
+          },
+      }
+  })
+    .then(function (response) {
+      // Redirecting browser to the callback URL.
+      window.location = callbackUrl
+    })
+    .catch(function (error) {
+      console.log(error);
+    });
+    }
+    </script>

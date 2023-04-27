@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="https://www.omg.org/spec/DMN/20191111/MODEL/" xmlns:dmndi="https://www.omg.org/spec/DMN/20191111/DMNDI/" xmlns:dc="http://www.omg.org/spec/DMN/20180521/DC/" xmlns:biodi="http://bpmn.io/schema/dmn/biodi/2.0" xmlns:modeler="http://camunda.org/schema/modeler/1.0" xmlns:camunda="http://camunda.org/schema/1.0/dmn" id="Decision_1dzjecj2" name="order approval" namespace="http://camunda.org/schema/1.0/dmn" exporter="Camunda Modeler" exporterVersion="5.5.1" modeler:executionPlatform="Camunda Cloud" modeler:executionPlatformVersion="8.1.0" camunda:diagramRelationId="e74a8527-b200-4adb-87e7-34f94b71d029">
+  <decision id="Decision_1dzjecj" name="orderApproval">
+    <decisionTable id="DecisionTable_1r7l2aj" hitPolicy="FIRST">
+      <input id="Input_1" label="Type of Bike" biodi:width="296">
+        <inputExpression id="InputExpression_1" typeRef="string" expressionLanguage="feel">
+          <text>product</text>
+        </inputExpression>
+      </input>
+      <input id="InputClause_0zw3s0k" label="Quantity">
+        <inputExpression id="LiteralExpression_1qzoi5i" typeRef="integer">
+          <text>quantity</text>
+        </inputExpression>
+      </input>
+      <output id="Output_1" label="Result" name="result" typeRef="boolean" biodi:width="192" />
+      <rule id="DecisionRule_0tft2se">
+        <description>1: "mountain bike"</description>
+        <inputEntry id="UnaryTests_18428ek">
+          <text>"Mountain Bicycle"</text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_1at211x">
+          <text>1</text>
+        </inputEntry>
+        <outputEntry id="LiteralExpression_0qrid7u">
+          <text>true</text>
+        </outputEntry>
+      </rule>
+      <rule id="DecisionRule_1ei152m">
+        <description>2: "electric bike"</description>
+        <inputEntry id="UnaryTests_116qnks">
+          <text>"Hybrid 40000 Bicycle"</text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_0trochq">
+          <text>1</text>
+        </inputEntry>
+        <outputEntry id="LiteralExpression_0tw9l27">
+          <text>true</text>
+        </outputEntry>
+      </rule>
+      <rule id="DecisionRule_0do9cd3">
+        <description>3: "Hybrid bike"</description>
+        <inputEntry id="UnaryTests_0a0kdli">
+          <text>"Speed Thriller Electric 147 Bicycle"</text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_0q9vr62">
+          <text>1</text>
+        </inputEntry>
+        <outputEntry id="LiteralExpression_1kcb6z3">
+          <text>true</text>
+        </outputEntry>
+      </rule>
+      <rule id="DecisionRule_1h79i5h">
+        <description></description>
+        <inputEntry id="UnaryTests_0dbszpe">
+          <text></text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_0snu11a">
+          <text></text>
+        </inputEntry>
+        <outputEntry id="LiteralExpression_0yq309x">
+          <text>false</text>
+        </outputEntry>
+      </rule>
+    </decisionTable>
+  </decision>
+  <dmndi:DMNDI>
+    <dmndi:DMNDiagram>
+      <dmndi:DMNShape dmnElementRef="Decision_1dzjecj">
+        <dc:Bounds height="80" width="180" x="160" y="100" />
+      </dmndi:DMNShape>
+    </dmndi:DMNDiagram>
+  </dmndi:DMNDI>
+</definitions>

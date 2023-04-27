@@ -1,0 +1,7 @@
+Manifest-Version: 1.0
+Created-By: Maven WAR Plugin 3.3.2
+Build-Jdk-Spec: 11
+Implementation-Title: Camunda Platform - webapp - Tomcat
+Implementation-Version: 7.18.0
+Implementation-Vendor: camunda services GmbH
+

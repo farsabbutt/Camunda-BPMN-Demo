@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+* {
+  box-sizing: border-box;
+}
+
+input[type=text], select, textarea {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  resize: vertical;
+}
+h2{
+  text-align: center;
+}
+
+label {
+  padding: 12px 12px 12px 0;
+  display: inline-block;
+}
+
+input[type=submit] {
+  background-color: #04AA6D;
+  color: white;
+  padding: 12px 20px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  float: right;
+}
+
+input[type=submit]:hover {
+  background-color: #45a049;
+}
+
+.container {
+  border-radius: 5px;
+  background-color: #f2f2f2;
+  padding: 20px;
+}
+
+.col-25 {
+  float: left;
+  width: 25%;
+  margin-top: 6px;
+}
+
+.col-75 {
+  float: left;
+  width: 75%;
+  margin-top: 6px;
+}
+
+/* Clear floats after the columns */
+.row:after {
+  content: "";
+  display: table;
+  clear: both;
+}
+
+/* Responsive layout - when the screen is less than 600px wide, make the two columns stack on top of each other instead of next to each other */
+@media screen and (max-width: 600px) {
+  .col-25, .col-75, input[type=submit] {
+    width: 100%;
+    margin-top: 0;
+  }
+}
+</style>
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+</head>
+<body>
+
+    <div class="form-section">
+      <div class="container pt-4">
+          <div class="form-container p-4">
+            <form id="submitForm" onsubmit="submitForm(event)">
+
+                  <h2>Create Production Order</h2>
+                  <div class="row py-4">
+                      <div class="col-6">
+                          <div class="dropdown text-start">
+                              <label for="selectProduct" class="form-label">Please select a bicycle for production: </label>
+                              <select class="form-select form-select-sm" id="selectProduct"
+                                  aria-label=".form-select-sm example">
+                                  <option selected>Open this select menu</option>
+                                  <option value="Mountain Bicycle">Mountain Bicycle</option>
+                                  <option value="Hybrid 40000 Bicycle">Hybrid 40000 Bicycle</option>
+                                  <option value="Speed Thriller Electric 147 Bicycle">Speed Thriller Electric 147
+                                      Bicycle</option>
+                              </select>
+                          </div>
+                      </div>
+                      <div class="col-6">
+                          <div class="dropdown text-start">
+                              <label for="selectQuantity" class="form-label">Quantity to be manufactured: </label>
+                              <select class="form-select form-select-sm" id="selectQuantity"
+                                  aria-label=".form-select-sm example" v-model="quantity">
+                                  <option selected>Open this select menu</option>
+                                  <option value="1">1</option>
+                                  <option value="2">2</option>
+                                  <option value="3">3</option>
+                              </select>
+                          </div>
+                      </div>
+                  </div>
+                  <div class="row">
+                      <div class="col-auto">
+                          <button class="btn btn-primary" type="submit" value="Submit">Place order!</button>
+                      </div>
+                  </div>
+              </form>
+          </div>
+      </div>
+  </div>
+
+</body>
+</html>
+
+<script>
+function submitForm(event) {
+  var selectedValue;
+  event.preventDefault()
+  const urlParams = new URLSearchParams(window.location.search)
+  const taskId = urlParams.get('taskId')
+  const callbackUrl = urlParams.get('callbackUrl')
+
+  var dropdown = document.getElementById("selectProduct");
+  var selectedValue = dropdown.value;
+  const selectQuantity = document.getElementById('selectQuantity').value
+  // const isApproved = approved ? true : false
+
+axios.post('http://localhost:8080/engine-rest/task/' + taskId + '/submit-form', {
+    "variables": {
+        "selectProduct": {
+            "value": selectedValue,
+            "type": "String"
+        },
+        "selectQuantity": {
+            "value": parseInt(selectQuantity)
+        },
+    }
+})
+  .then(function (response) {
+    // Redirecting browser to the callback URL.
+    window.location = callbackUrl
+  })
+  .catch(function (error) {
+    console.log(error);
+  });
+  }
+  </script>

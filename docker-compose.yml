@@ -1,0 +1,180 @@
+#Camunda engine workflow container
+version: "3.8"
+services:
+  camunda-engine:
+    container_name: camunda-bpm-platform
+    networks:
+      - camunda
+    image: camunda/camunda-bpm-platform:latest
+    volumes:
+      - ./camunda-engine/webapps:/camunda/webapps
+    ports:
+      - "8080:8080"
+    tty: true
+
+  #VueJS front-end customer order application
+  frontend-app:
+    container_name: frontend-order-app
+    env_file:
+      - ./.env
+    networks:
+      - camunda
+    build:
+      context: ./frontend-order-app/
+      dockerfile: dev.Dockerfile
+    volumes:
+      - ./frontend-order-app:/frontend-order-app
+    ports:
+      - "5173:5173"
+    depends_on:
+      - camunda-engine
+
+  #Tomcat server & Maven container
+  process-application:
+    container_name: process-application
+    networks:
+      - camunda
+    build:
+      context: ./process-application/
+      dockerfile: Dockerfile
+    volumes:
+      - ./process-application:/app
+    depends_on:
+      - camunda-engine
+
+  #MongoDB container for transactional data 
+  mongo:
+    container_name: mongodb
+    networks:
+      - camunda
+    image: mongo
+    volumes:
+      - ./data/mongo-db:/data/db
+    restart: always
+    ports:
+      - "27017:27017"
+    depends_on:
+      - camunda-engine
+
+  #MySQL container for master's data 
+  mysql:
+    container_name: mysqldb
+    image: mysql:5
+    networks:
+      - camunda
+    hostname: mysql
+    volumes:
+      - ./data/mysql-db:/var/lib/mysql
+      - ./provision:/docker-entrypoint-initdb.d
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: customer_DB
+      MYSQL_USER: dev
+      MYSQL_PASSWORD: dev
+
+  #phpMyAdmin container for database adminstration tasks
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin:latest
+    container_name: phpMyAdmin
+    networks:
+      - camunda
+    restart: always
+    links:
+      - mysql
+    ports:
+      - "8183:80"
+    environment:
+      PMA_HOST: mysql
+      PMA_USER: root
+      PMA_PASSWORD: root
+      PMA_ARBITRARY: 1
+
+  #Customer order processes container with multiple external tasks
+  external-task-process-flow:
+    container_name: external-task-process-flow
+    tty: true
+    networks:
+      - camunda
+    build:
+      context: ./external-task-process-flow
+      dockerfile: Dockerfile
+    volumes:
+      - ./external-task-process-flow:/app
+    env_file:
+      - ./.env
+    depends_on:
+      - camunda-engine
+
+networks:
+  camunda:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.16.238.0/24
+
+  #Transport service provider website for RPA demonstrator
+  # rpa-demonstrator-website:
+  #   container_name: rpa-demonstrator-website
+  #   image: rahibbutt/rpa-demonstrator-website
+  #   environment:
+  #     ASPNETCORE_ENVIRONMENT: Production
+  #   links:
+  #     - mysql
+  #   ports:
+  #     - 5000:5000
+  #   restart: unless-stopped
+  #   tty: true
+  #   networks:
+  #     - camunda
+
+  #RPA Demonstrator API application
+  # rpa-demonstrator-api:
+  #   container_name: rpa-demonstrator-api
+  #   image: rpa-demonstrator-api
+  #   build:
+  #     context: ./RPADemonstrator
+  #     dockerfile: ./Dockerfile
+  #   environment:
+  #     server.port: 8090
+  #     databaseServerAddress: mysql
+  #     databaseServerPort: 3306
+  #     databaseServerUser: root
+  #     databaseServerPassword: root
+  #     uiPathBaseUrl: https://cloud.uipath.com
+  #     uiPathOrganization: thklnbpalab
+  #     uiPathTenant: DefaultTenant
+  #     uiPathClient: defa2c02-0e11-4f54-8d23-d38f8f2125da
+  #     uiPathSecret: )By4w%vL%@KXS5k5
+  #     uiPathScope: OR.Machines OR.Execution OR.Queues OR.Jobs OR.Tasks OR.Robots
+  #     uiPathClientId: 3996354
+  #     apiAddress: http://rpa-demonstrator-api:8090
+  #     apiKey: cktwo457cvma74lshj3g@lab6w35t45*45
+  #     siteAddress: http://rpa-demonstrator-website:5000
+  #     siteLogin: client@mail.com
+  #     sitePassword: client
+  #     camundaEngineApi: http://camunda-engine:8080/engine-rest
+  #     orderCheckServiceTimeout: 600000
+  #     camunda.bpm.client.base-url: http://camunda-engine:8080/engine-rest
+  #   ports:
+  #     - 8090:8090
+  #   links:
+  #     - mysql
+  #     - camunda-engine
+  #   restart: unless-stopped
+  #   tty: true
+  #   networks:
+  #     - camunda
+
+  #RPA Demonstrator API application
+  # robot:
+  #   container_name: ui-path-robot
+  #   image: registry.uipath.com/robot/uiautomation-runtime:22.10.47.57575-robot22.10.3
+  #   environment:
+  #     LICENSE_AGREEMENT: accept
+  #     ORCHESTRATOR_URL: "https://cloud.uipath.com/thklnbpalab/DefaultTenant/orchestrator_"
+  #     MACHINE_KEY: "6a8c2896-7a9c-4971-8ee5-1743b60e9c9d"
+  #   tty: true
+  #   networks:
+  #     - camunda

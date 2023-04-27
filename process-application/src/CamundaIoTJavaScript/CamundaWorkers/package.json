@@ -1,0 +1,21 @@
+{
+  "name": "workers",
+  "version": "1.0.0",
+  "description": "",
+  "main": "iotWorker.js",
+  "dependencies": {
+    "camunda-external-task-client-js": "^2.1.0",
+    "date-and-time": "^2.0.0",
+    "moment-timezone": "^0.5.34",
+    "mongoose": "^5.13.7",
+    "mosca": "^2.8.3",
+    "mqtt": "^4.2.8",
+    "tzdata": "^1.0.29"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "David Kuria",
+  "license": "ISC"
+}

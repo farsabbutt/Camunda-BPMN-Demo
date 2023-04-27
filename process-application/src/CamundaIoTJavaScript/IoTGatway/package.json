@@ -1,0 +1,10 @@
+{
+  "dependencies": {
+    "jsonschema": "^1.2.6",
+    "mosca": "^2.8.3",
+    "mqtt": "^4.3.7",
+    "node-dht-sensor": "^0.4.3",
+    "onoff": "^6.0.3",
+    "pigpio": "^3.3.1"
+  }
+}

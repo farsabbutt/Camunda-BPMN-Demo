@@ -1,0 +1,356 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:camunda="http://camunda.org/schema/1.0/bpmn" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:modeler="http://camunda.org/schema/modeler/1.0" id="Definitions_1n5wxt8" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="4.10.0" modeler:executionPlatform="Camunda Platform" modeler:executionPlatformVersion="7.15.0">
+  <bpmn:process id="warehouse_process" name="Warehouse Process" isExecutable="true">
+    <bpmn:exclusiveGateway id="gate_tasktype" name="Order Tasktype">
+      <bpmn:incoming>Flow_05yhqvx</bpmn:incoming>
+      <bpmn:outgoing>flow_exstore</bpmn:outgoing>
+      <bpmn:outgoing>flow_store</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:sequenceFlow id="flow_exstore" name="exstore" sourceRef="gate_tasktype" targetRef="check_inventory">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${tasktype=="exstore"}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="flow_store" name="store" sourceRef="gate_tasktype" targetRef="check_storage_location">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${tasktype=="store"}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:serviceTask id="exTaskPy_Store" name="Store Order Warehouse Robot" camunda:type="external" camunda:topic="storetopic">
+      <bpmn:incoming>Flow_0mcpzf2</bpmn:incoming>
+      <bpmn:outgoing>store_robot_sucess</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:sequenceFlow id="Flow_0mcpzf2" sourceRef="check_storage_location" targetRef="exTaskPy_Store" />
+    <bpmn:sequenceFlow id="Flow_0ji18f4" sourceRef="check_inventory" targetRef="exTaskPy_Exstore" />
+    <bpmn:serviceTask id="exTaskPy_Exstore" name="Exstore Order Warehouse Robot" camunda:type="external" camunda:topic="exstoretopic">
+      <bpmn:incoming>Flow_0ji18f4</bpmn:incoming>
+      <bpmn:outgoing>Flow_08dlct7</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:exclusiveGateway id="gate_robot_success" name="Robot Success">
+      <bpmn:incoming>store_robot_sucess</bpmn:incoming>
+      <bpmn:incoming>Flow_08dlct7</bpmn:incoming>
+      <bpmn:outgoing>Flow_1n7uaw0</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:sequenceFlow id="store_robot_sucess" sourceRef="exTaskPy_Store" targetRef="gate_robot_success" />
+    <bpmn:sequenceFlow id="Flow_08dlct7" sourceRef="exTaskPy_Exstore" targetRef="gate_robot_success" />
+    <bpmn:startEvent id="Get_Warehouse_Order" name="Get Warehouse Order">
+      <bpmn:extensionElements>
+        <camunda:formData>
+          <camunda:formField id="tasktype" label="Tasktype" type="enum">
+            <camunda:value id="store" name="Store" />
+            <camunda:value id="exstore" name="Exstore" />
+          </camunda:formField>
+          <camunda:formField id="shelf_id" label="Shelfnumber" type="long" defaultValue="1" />
+          <camunda:formField id="place_id" label="Placenumber" type="long" />
+          <camunda:formField id="item" label="Item" type="string" />
+        </camunda:formData>
+      </bpmn:extensionElements>
+      <bpmn:outgoing>Flow_05yhqvx</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:sequenceFlow id="Flow_05yhqvx" sourceRef="Get_Warehouse_Order" targetRef="gate_tasktype" />
+    <bpmn:boundaryEvent id="event_place_not_empty" name="Place not empty" attachedToRef="check_storage_location">
+      <bpmn:outgoing>Flow_14c3di9</bpmn:outgoing>
+      <bpmn:errorEventDefinition id="ErrorEventDefinition_1wz4uzp" errorRef="Error_1p6in8d" />
+    </bpmn:boundaryEvent>
+    <bpmn:sequenceFlow id="Flow_14c3di9" sourceRef="event_place_not_empty" targetRef="manual_store" />
+    <bpmn:serviceTask id="check_inventory" name="Check inventory" camunda:type="external" camunda:topic="exstorecheck">
+      <bpmn:incoming>flow_exstore</bpmn:incoming>
+      <bpmn:incoming>Flow_1b2djus</bpmn:incoming>
+      <bpmn:incoming>Flow_03j3f91</bpmn:incoming>
+      <bpmn:outgoing>Flow_0ji18f4</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:boundaryEvent id="event_false_item" name="False Item" attachedToRef="check_inventory">
+      <bpmn:outgoing>Flow_17ljli9</bpmn:outgoing>
+      <bpmn:errorEventDefinition id="ErrorEventDefinition_1491c1b" errorRef="Error_0orogig" />
+    </bpmn:boundaryEvent>
+    <bpmn:sequenceFlow id="Flow_17ljli9" sourceRef="event_false_item" targetRef="manual_check_warehouse_place" />
+    <bpmn:userTask id="manual_check_warehouse_place" name="Manual check of the warehouse place">
+      <bpmn:extensionElements>
+        <camunda:formData>
+          <camunda:formField id="shelf_id" label="Shelfnumber" type="long" defaultValue="1" />
+          <camunda:formField id="place_id" label="Placenumber" type="long" />
+          <camunda:formField id="item" label="Item" type="string" />
+        </camunda:formData>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_17ljli9</bpmn:incoming>
+      <bpmn:outgoing>Flow_03j3f91</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:boundaryEvent id="event_place_empty" name="Place empty" attachedToRef="check_inventory">
+      <bpmn:outgoing>Flow_1wespi2</bpmn:outgoing>
+      <bpmn:errorEventDefinition id="ErrorEventDefinition_0j5gbgx" errorRef="Error_1gt7vzw" />
+    </bpmn:boundaryEvent>
+    <bpmn:sequenceFlow id="Flow_1wespi2" sourceRef="event_place_empty" targetRef="manual_check_warehouse_db" />
+    <bpmn:userTask id="manual_check_warehouse_db" name="Manual Check of the warehouse db">
+      <bpmn:extensionElements>
+        <camunda:formData>
+          <camunda:formField id="shelf_id" label="Shelfnumber" type="long" defaultValue="1" />
+          <camunda:formField id="place_id" label="Placenumber" type="long" />
+          <camunda:formField id="item" label="Item" type="string" />
+        </camunda:formData>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_1wespi2</bpmn:incoming>
+      <bpmn:outgoing>Flow_1b2djus</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:sequenceFlow id="Flow_1b2djus" sourceRef="manual_check_warehouse_db" targetRef="check_inventory" />
+    <bpmn:sequenceFlow id="Flow_03j3f91" sourceRef="manual_check_warehouse_place" targetRef="check_inventory" />
+    <bpmn:serviceTask id="check_storage_location" name="Check storage location" camunda:type="external" camunda:topic="storecheck">
+      <bpmn:incoming>flow_store</bpmn:incoming>
+      <bpmn:outgoing>Flow_0mcpzf2</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:manualTask id="manual_store" name="Manual storage">
+      <bpmn:documentation>Place not empty. A human worker need to store the item manually</bpmn:documentation>
+      <bpmn:incoming>Flow_14c3di9</bpmn:incoming>
+      <bpmn:outgoing>Flow_0ycgv5x</bpmn:outgoing>
+    </bpmn:manualTask>
+    <bpmn:sequenceFlow id="Flow_0ycgv5x" sourceRef="manual_store" targetRef="update_warehouse_db" />
+    <bpmn:userTask id="update_warehouse_db" name="Update Warehouse db">
+      <bpmn:documentation>Manual change of the warehouse database</bpmn:documentation>
+      <bpmn:extensionElements>
+        <camunda:formData>
+          <camunda:formField id="shelf_id" label="Shelfnumber" type="long" />
+          <camunda:formField id="place_id" label="Placenumber" type="long" />
+          <camunda:formField id="item" label="Item" type="string" />
+        </camunda:formData>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_0ycgv5x</bpmn:incoming>
+      <bpmn:outgoing>Flow_1p9yc9h</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:sequenceFlow id="Flow_1n7uaw0" sourceRef="gate_robot_success" targetRef="send_success_message" />
+    <bpmn:endEvent id="end_Warehouse_Order" name="Warehouseorder done">
+      <bpmn:incoming>Flow_0qojxiw</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="Flow_0qojxiw" sourceRef="send_success_message" targetRef="end_Warehouse_Order" />
+    <bpmn:boundaryEvent id="timer_store_max2" name="Max 2 Min" attachedToRef="exTaskPy_Store">
+      <bpmn:outgoing>flow_store_working_time</bpmn:outgoing>
+      <bpmn:timerEventDefinition id="TimerEventDefinition_152b1r1">
+        <bpmn:timeDuration xsi:type="bpmn:tFormalExpression">PT2M</bpmn:timeDuration>
+      </bpmn:timerEventDefinition>
+    </bpmn:boundaryEvent>
+    <bpmn:exclusiveGateway id="Gateway_0q556j6">
+      <bpmn:incoming>flow_exstore_working_time</bpmn:incoming>
+      <bpmn:incoming>flow_store_working_time</bpmn:incoming>
+      <bpmn:outgoing>Flow_0kk1bpg</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:sequenceFlow id="Flow_0kk1bpg" sourceRef="Gateway_0q556j6" targetRef="Activity_0gf31x2" />
+    <bpmn:boundaryEvent id="timer_exstore_max2" name="Max 2 Min" attachedToRef="exTaskPy_Exstore">
+      <bpmn:outgoing>flow_exstore_working_time</bpmn:outgoing>
+      <bpmn:timerEventDefinition id="TimerEventDefinition_0rmz6bf">
+        <bpmn:timeDuration xsi:type="bpmn:tFormalExpression">PT2M</bpmn:timeDuration>
+      </bpmn:timerEventDefinition>
+    </bpmn:boundaryEvent>
+    <bpmn:sequenceFlow id="flow_exstore_working_time" name="Extore Working Time exceeded" sourceRef="timer_exstore_max2" targetRef="Gateway_0q556j6" />
+    <bpmn:sequenceFlow id="flow_store_working_time" name="Store Working Time exceeded" sourceRef="timer_store_max2" targetRef="Gateway_0q556j6" />
+    <bpmn:endEvent id="Event_1udf3s4">
+      <bpmn:incoming>Flow_1b4cfz8</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="Flow_1b4cfz8" sourceRef="Activity_0gf31x2" targetRef="Event_1udf3s4" />
+    <bpmn:sequenceFlow id="Flow_1p9yc9h" sourceRef="update_warehouse_db" targetRef="send_success_message" />
+    <bpmn:userTask id="Activity_0gf31x2" name="Send Robot time exceeded Error">
+      <bpmn:incoming>Flow_0kk1bpg</bpmn:incoming>
+      <bpmn:outgoing>Flow_1b4cfz8</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:userTask id="send_success_message" name="Send success message">
+      <bpmn:incoming>Flow_1n7uaw0</bpmn:incoming>
+      <bpmn:incoming>Flow_1p9yc9h</bpmn:incoming>
+      <bpmn:outgoing>Flow_0qojxiw</bpmn:outgoing>
+    </bpmn:userTask>
+  </bpmn:process>
+  <bpmn:error id="Error_1p6in8d" name="PLACE_NOT_EMPTY" errorCode="PLACE_NOT_EMPTY" />
+  <bpmn:error id="Error_0orogig" name="FALSE ITEM" errorCode="FALSE_ITEM" />
+  <bpmn:error id="Error_1gt7vzw" name="PLACE EMPTY" errorCode="PLACE_EMPTY" />
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="warehouse_process">
+      <bpmndi:BPMNEdge id="Flow_03j3f91_di" bpmnElement="Flow_03j3f91">
+        <di:waypoint x="620" y="100" />
+        <di:waypoint x="490" y="100" />
+        <di:waypoint x="490" y="200" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1b2djus_di" bpmnElement="Flow_1b2djus">
+        <di:waypoint x="610" y="400" />
+        <di:waypoint x="490" y="400" />
+        <di:waypoint x="490" y="280" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1wespi2_di" bpmnElement="Flow_1wespi2">
+        <di:waypoint x="560" y="298" />
+        <di:waypoint x="560" y="370" />
+        <di:waypoint x="610" y="370" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_17ljli9_di" bpmnElement="Flow_17ljli9">
+        <di:waypoint x="560" y="182" />
+        <di:waypoint x="560" y="120" />
+        <di:waypoint x="620" y="120" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_14c3di9_di" bpmnElement="Flow_14c3di9">
+        <di:waypoint x="530" y="658" />
+        <di:waypoint x="530" y="740" />
+        <di:waypoint x="590" y="740" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_05yhqvx_di" bpmnElement="Flow_05yhqvx">
+        <di:waypoint x="208" y="420" />
+        <di:waypoint x="335" y="420" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_08dlct7_di" bpmnElement="Flow_08dlct7">
+        <di:waypoint x="850" y="240" />
+        <di:waypoint x="1200" y="240" />
+        <di:waypoint x="1200" y="395" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_03o5xxw_di" bpmnElement="store_robot_sucess">
+        <di:waypoint x="850" y="600" />
+        <di:waypoint x="1200" y="600" />
+        <di:waypoint x="1200" y="445" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="897" y="582" width="59" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0ji18f4_di" bpmnElement="Flow_0ji18f4">
+        <di:waypoint x="580" y="240" />
+        <di:waypoint x="750" y="240" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0mcpzf2_di" bpmnElement="Flow_0mcpzf2">
+        <di:waypoint x="580" y="600" />
+        <di:waypoint x="750" y="600" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1v63zlk_di" bpmnElement="flow_store">
+        <di:waypoint x="360" y="445" />
+        <di:waypoint x="360" y="600" />
+        <di:waypoint x="480" y="600" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="388" y="522" width="25" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0sb8fk5_di" bpmnElement="flow_exstore">
+        <di:waypoint x="360" y="395" />
+        <di:waypoint x="360" y="240" />
+        <di:waypoint x="480" y="240" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="381" y="315" width="37" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0ycgv5x_di" bpmnElement="Flow_0ycgv5x">
+        <di:waypoint x="690" y="740" />
+        <di:waypoint x="910" y="740" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1n7uaw0_di" bpmnElement="Flow_1n7uaw0">
+        <di:waypoint x="1225" y="420" />
+        <di:waypoint x="1330" y="420" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0qojxiw_di" bpmnElement="Flow_0qojxiw">
+        <di:waypoint x="1430" y="420" />
+        <di:waypoint x="1512" y="420" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0kk1bpg_di" bpmnElement="Flow_0kk1bpg">
+        <di:waypoint x="825" y="420" />
+        <di:waypoint x="910" y="420" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0um0y6y_di" bpmnElement="flow_exstore_working_time">
+        <di:waypoint x="800" y="298" />
+        <di:waypoint x="800" y="395" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="812" y="336" width="75" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_10ryj25_di" bpmnElement="flow_store_working_time">
+        <di:waypoint x="800" y="542" />
+        <di:waypoint x="800" y="445" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="812" y="491" width="75" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1b4cfz8_di" bpmnElement="Flow_1b4cfz8">
+        <di:waypoint x="1010" y="420" />
+        <di:waypoint x="1102" y="420" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1p9yc9h_di" bpmnElement="Flow_1p9yc9h">
+        <di:waypoint x="1010" y="740" />
+        <di:waypoint x="1380" y="740" />
+        <di:waypoint x="1380" y="460" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="Gateway_0ya66o6_di" bpmnElement="gate_tasktype" isMarkerVisible="true">
+        <dc:Bounds x="335" y="395" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="403" y="410" width="75" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_1xswojb_di" bpmnElement="exTaskPy_Store">
+        <dc:Bounds x="750" y="560" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_1qtk2ie_di" bpmnElement="exTaskPy_Exstore">
+        <dc:Bounds x="750" y="200" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_1igzvoq_di" bpmnElement="Get_Warehouse_Order">
+        <dc:Bounds x="172" y="402" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="152" y="445" width="77" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_1lf18ed_di" bpmnElement="check_inventory">
+        <dc:Bounds x="480" y="200" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_0ign6pk_di" bpmnElement="manual_check_warehouse_place">
+        <dc:Bounds x="620" y="80" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_0apek0z_di" bpmnElement="manual_check_warehouse_db">
+        <dc:Bounds x="610" y="340" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_09onqct_di" bpmnElement="check_storage_location">
+        <dc:Bounds x="480" y="560" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_1xsoj0j_di" bpmnElement="manual_store">
+        <dc:Bounds x="590" y="700" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_0eskmll_di" bpmnElement="end_Warehouse_Order">
+        <dc:Bounds x="1512" y="402" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1489" y="445" width="82" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_0q556j6_di" bpmnElement="Gateway_0q556j6" isMarkerVisible="true">
+        <dc:Bounds x="775" y="395" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_1udf3s4_di" bpmnElement="Event_1udf3s4">
+        <dc:Bounds x="1102" y="402" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_0z4zxgf_di" bpmnElement="gate_robot_success" isMarkerVisible="true">
+        <dc:Bounds x="1175" y="395" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1231.5" y="433" width="75" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_1d1ujqo_di" bpmnElement="update_warehouse_db">
+        <dc:Bounds x="910" y="700" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_0qrobqb_di" bpmnElement="Activity_0gf31x2">
+        <dc:Bounds x="910" y="380" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_0fu8ctl_di" bpmnElement="send_success_message">
+        <dc:Bounds x="1330" y="380" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_01r8yic_di" bpmnElement="event_place_empty">
+        <dc:Bounds x="542" y="262" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="579" y="283" width="62" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_0t2i6qq_di" bpmnElement="event_false_item">
+        <dc:Bounds x="542" y="182" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="584" y="193" width="52" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_0yhd02l_di" bpmnElement="event_place_not_empty">
+        <dc:Bounds x="512" y="622" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="430" y="653" width="80" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_0bs19g7_di" bpmnElement="timer_exstore_max2">
+        <dc:Bounds x="782" y="262" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="814" y="293" width="51" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_0wew3h7_di" bpmnElement="timer_store_max2">
+        <dc:Bounds x="782" y="542" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="824" y="543" width="51" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>
