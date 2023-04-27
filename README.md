@@ -1,4 +1,4 @@
-# camunda-business-process
+# Camunda Business Process Model and Notation
 
 # Prerequisites
 - Linux or WSL for Windows
